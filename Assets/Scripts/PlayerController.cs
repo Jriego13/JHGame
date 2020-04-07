@@ -10,13 +10,15 @@ public class PlayerController : MonoBehaviour
     Rigidbody2D playerBody;
     SpriteRenderer playerSprite;
     public bool grounded;
+    public bool running;
     public bool ducking;
+    public bool shooting;
 
     // Start is called before the first frame update
     void Start() // it seems like a lot of getcomponents happen here so that we can use them later.
     {
         playerAnimator = GetComponent<Animator>();
-        playerBody = GetComponent<Rigidbody2D> ();
+        playerBody = GetComponent<Rigidbody2D>();
         playerSprite = GetComponent<SpriteRenderer>();
         playerPosition = GetComponent<Transform>();
         //sprites = Resources.LoadAll("Assets/Warped Caves/Artwork/Sprites/player/player-duck");
@@ -30,56 +32,72 @@ public class PlayerController : MonoBehaviour
     // FixedUpdate is called after a particular number of frames, use fixedupdate to affect movement
     void FixedUpdate()
     {
-        if(Physics2D.Linecast(transform.position, groundCheck.position, 1 << LayerMask.NameToLayer("Ground")) ||
+        if (Physics2D.Linecast(transform.position, groundCheck.position, 1 << LayerMask.NameToLayer("Ground")) ||
           (Physics2D.Linecast(transform.position, groundCheckL.position, 1 << LayerMask.NameToLayer("Ground")) ||
           (Physics2D.Linecast(transform.position, groundCheckR.position, 1 << LayerMask.NameToLayer("Ground")))))
         {
-          grounded = true;
+            grounded = true;
         }
         else
         {
-          grounded = false;
+            grounded = false;
         }
 
-        if(Input.GetKey("a"))
+        if (Input.GetKey("a"))
         {
-          playerSprite.flipX = true;
-          if(!ducking)
-            playerBody.velocity = new Vector2(-1, playerBody.velocity.y);
-          if(grounded && !ducking)
-            playerAnimator.Play("PlayerRun");
+            playerPosition.eulerAngles = new Vector2(0, 180);
+            running = true;
+            if (!ducking)
+                playerBody.velocity = new Vector2(-1, playerBody.velocity.y);
+            if (grounded && !ducking && !shooting)
+                playerAnimator.Play("PlayerRun");
         }
-        else if(Input.GetKey("d"))
+        else if (Input.GetKey("d"))
         {
-            playerSprite.flipX = false;
-            if(!ducking)
-              playerBody.velocity = new Vector2(1, playerBody.velocity.y);
-            if(grounded && !ducking)
-              playerAnimator.Play("PlayerRun");
+            playerPosition.eulerAngles = new Vector2(0, 0);
+            running = true;
+            if (!ducking)
+                playerBody.velocity = new Vector2(1, playerBody.velocity.y);
+            if (grounded && !ducking && !shooting)
+                playerAnimator.Play("PlayerRun");
         }
         else
-        {
-          playerBody.velocity = new Vector2(0, playerBody.velocity.y);
-          if(grounded && !ducking)
-            playerAnimator.Play("PlayerIdle");
+        { 
+            playerBody.velocity = new Vector2(0, playerBody.velocity.y);
+            running = false;
+            if (grounded && !ducking && !shooting)
+                playerAnimator.Play("PlayerIdle");
         }
 
-        if(Input.GetKey("s"))
+        if (Input.GetKey("s"))
         {
-          ducking = true;
-          playerAnimator.Play("PlayerDuck");
+            ducking = true;
+            playerAnimator.Play("PlayerDuck");
         }
         else
-          ducking = false;
+            ducking = false;
 
-        if(Input.GetKeyDown("space") && grounded)
+        if (Input.GetKey("e") && !running)
         {
-          playerBody.velocity = new Vector2(playerBody.velocity.x, 3);
+            playerAnimator.Play("PlayerStandShoot");
+            shooting = true;
+        }
+        else if (Input.GetKey("e") && running)
+        {
+            playerAnimator.Play("PlayerRunShoot");
+            shooting = true;
+        }
+        else
+            shooting = false;
+
+        if (Input.GetKey("space") && grounded)
+        {
+            playerBody.velocity = new Vector2(playerBody.velocity.x, 3);
         }
 
-        if(!grounded)
+        if (!grounded)
         {
-          playerAnimator.Play("PlayerJump");
+            playerAnimator.Play("PlayerJump");
         }
     }
 }
